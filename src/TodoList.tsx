@@ -30,7 +30,6 @@ function TodoRow({ item, edit }: { item: Todo; edit: (item: Todo) => void }) {
       onClickCapture={event => { if (moved.current) { event.preventDefault(); event.stopPropagation(); moved.current = false; } }}>
       <button className="todo-check" aria-label={`${item.completed ? 'Mark incomplete' : 'Complete'}: ${item.task}`} aria-pressed={item.completed} onClick={() => toggle(item.id)}>{item.completed ? '✓' : ''}</button>
       <button className="todo-text" onClick={() => edit(item)}>{item.task}</button>
-      <button className="todo-more" aria-label={`Show delete for ${item.task}`} aria-expanded={offset < 0} onClick={() => setOffset(offset ? 0 : -88)}>⋯</button>
     </div>
   </div>;
 }
@@ -52,9 +51,8 @@ export function TodoList() {
     return () => { active = false; };
   }, []);
 
-  return <section className="todo-page" aria-labelledby="todo-title">
-    <a className="back-link" href="#">← Your everyday</a>
-    <div className="todo-heading"><div><p className="eyebrow">ONE THING AT A TIME</p><h1 id="todo-title">TODO lists<span>.</span></h1><p className="intro-copy">A little space for what needs doing.</p></div><button ref={addButton} className="todo-add" aria-label="Add todo" disabled={!ready} onClick={() => setEditing({ id: crypto.randomUUID(), dueDate: today(), task: '', completed: false })}>+</button></div>
+  return <section className="todo-page" aria-labelledby="screen-title">
+    <div className="todo-heading"><div><p className="eyebrow">ONE THING AT A TIME</p><p className="intro-copy">A little space for what needs doing.</p></div><button ref={addButton} className="todo-add" aria-label="Add todo" disabled={!ready} onClick={() => setEditing({ id: crypto.randomUUID(), dueDate: today(), task: '', completed: false })}>+</button></div>
     {error ? <p role="alert" className="message">Could not load todos. Reload to retry.</p> : !ready ? <p className="todo-empty" role="status">Loading your list…</p> : items.length === 0 ? <div className="todo-empty"><p>Nothing on your list yet.</p><p>Tap + to add your first todo.</p></div> : groupTodos(items).map(([date, group]) => <section className="todo-group" key={date} aria-label={date}><h2><time dateTime={date}>{new Date(`${date}T12:00:00`).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</time><span>{group.length}</span></h2>{group.map(item => <TodoRow key={item.id} item={item} edit={setEditing} />)}</section>)}
     {editing && <TodoDrawer onDismiss={() => setEditing(null)}>{close =>
       <form onSubmit={event => { event.preventDefault(); if (!editing.task.trim()) return; save({ ...editing, task: editing.task.trim() }); close(); }}>

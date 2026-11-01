@@ -15,17 +15,17 @@ function Icon({ kind }: { kind: 'todo' | 'bag' | 'pocket' }) {
 }
 
 export function App() {
-  const { setupDismissed, dismissSetup } = useSettings();
-  const [hydrated, setHydrated] = useState(useSettings.persist.hasHydrated());
+  const { dismissSetup } = useSettings();
   const [storage, setStorage] = useState<StorageStatus>('checking');
   const [permission, setPermission] = useState<NotificationPermission | 'unsupported'>(typeof Notification === 'undefined' ? 'unsupported' : Notification.permission);
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
   const [online, setOnline] = useState(navigator.onLine);
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [todoOpen, setTodoOpen] = useState(window.location.hash === '#todos');
+  const [page, setPage] = useState(window.location.hash);
+  const settingsOpen = page === '#settings';
+  const todoOpen = page === '#todos';
   useEffect(() => {
-    const navigate = () => setTodoOpen(window.location.hash === '#todos');
+    const navigate = () => { setPage(window.location.hash); window.scrollTo(0, 0); };
     window.addEventListener('hashchange', navigate);
     return () => window.removeEventListener('hashchange', navigate);
   }, []);
@@ -41,11 +41,8 @@ export function App() {
   }
 
   useEffect(() => {
-    const unsubscribe = useSettings.persist.onFinishHydration(() => setHydrated(true));
-    // Hydration can finish between render and effect registration.
-    if (useSettings.persist.hasHydrated()) setHydrated(true);
     void requestStorage();
-    const storageError = () => { setHydrated(true); setMessage('Device storage is unavailable. Changes may not survive closing this app.'); };
+    const storageError = () => setMessage('Device storage is unavailable. Changes may not survive closing this app.');
     const offlineError = () => setMessage('Offline setup failed. Reopen online to retry.');
     const network = () => setOnline(navigator.onLine);
     window.addEventListener('pocket-storage-error', storageError);
@@ -57,7 +54,6 @@ export function App() {
       void useSettings.persist.rehydrate();
     }
     return () => {
-      unsubscribe();
       window.removeEventListener('pocket-storage-error', storageError);
       window.removeEventListener('pocket-offline-error', offlineError);
       window.removeEventListener('online', network);
@@ -94,23 +90,27 @@ export function App() {
     try {
       dismissSetup();
     } catch { setMessage('Could not save setup preference.'); }
-    setSettingsOpen(false);
+    window.location.hash = '';
   }
 
-  const showSetup = settingsOpen || (hydrated && !setupDismissed);
   return <main className="shell">
-    <header className="topbar"><a className="brand" href="./" aria-label="Pocket home"><span className="brand-icon"><Icon kind="pocket" /></span>Pocket<span className="brand-dot">.</span></a><button className="settings" onClick={() => setSettingsOpen(!settingsOpen)} aria-expanded={showSetup} aria-controls="setup">Settings <span aria-hidden="true">↗</span></button></header>
-    {todoOpen ? <TodoList /> : <><section className="intro"><p className="eyebrow">A LITTLE SPACE FOR EVERYDAY LIFE</p><h1>Less on your mind.<br /><span>More in your pocket.</span></h1><p className="intro-copy">Your lists, in one little place.<br className="mobile-break" /> Ready whenever you are.</p></section>
+    {settingsOpen || todoOpen ? <header className="screen-nav">
+      <a className="nav-back" href="#" aria-label="Back to Home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7" /></svg><span>Back</span></a>
+      <h1 id="screen-title">{settingsOpen ? 'Settings' : 'TODO lists'}</h1>
+    </header> : <header className="topbar"><a className="brand" href="./" aria-label="Pocket home"><span className="brand-icon"><Icon kind="pocket" /></span>Pocket<span className="brand-dot">.</span></a><a className="settings" href="#settings" aria-label="Settings" aria-current={settingsOpen ? 'page' : undefined}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m9.5 3-.5 2-2 .9-1.9-.6-2.5 4.3L4 11v2l-1.4 1.4 2.5 4.3 1.9-.6 2 .9.5 2h5l.5-2 2-.9 1.9.6 2.5-4.3L20 13v-2l1.4-1.4-2.5-4.3-1.9.6-2-.9-.5-2z"/><circle cx="12" cy="12" r="3.2"/></svg></a></header>}
+    {!settingsOpen && (todoOpen ? <TodoList /> : <><section className="intro"><p className="eyebrow">A LITTLE SPACE FOR EVERYDAY LIFE</p><h1>Less on your mind.<br /><span>More in your pocket.</span></h1><p className="intro-copy">Your lists, in one little place.<br className="mobile-break" /> Ready whenever you are.</p></section>
     <section className="lists" aria-labelledby="lists-title"><div className="section-heading"><h2 id="lists-title">Your everyday</h2><span>02 SPACES</span></div><div className="tiles">
       <a className="tile todo" href="#todos"><div className="tile-top"><span className="tile-icon"><Icon kind="todo" /></span><span className="pill">OPEN ↗</span></div><div><h3>TODO lists</h3><p>Make room for what matters.</p></div><span className="tile-number" aria-hidden="true">01</span></a>
       <article className="tile shopping"><div className="tile-top"><span className="tile-icon"><Icon kind="bag" /></span><span className="pill">COMING SOON</span></div><div><h3>Shopping</h3><p>A little list. One less thing to forget.</p></div><span className="tile-number" aria-hidden="true">02</span></article>
-    </div></section></>}
-    {showSetup && <section id="setup" className="setup" aria-labelledby="setup-title"><div className="setup-heading"><span className="spark" aria-hidden="true">✳</span><div><p className="eyebrow">MAKE YOURSELF AT HOME</p><h2 id="setup-title">A quick pocket check.</h2></div></div><p className="setup-copy">Keep your space on this device, and let Pocket send you a nudge.</p>
+    </div></section></>)}
+    {settingsOpen && <section className="settings-page" aria-labelledby="screen-title">
+      <div className="settings-heading"><p className="eyebrow">MAKE YOURSELF AT HOME</p><p className="intro-copy">A few little things to make Pocket yours.</p></div>
+      <section id="setup" className="setup" aria-labelledby="setup-title"><div className="setup-heading"><span className="spark" aria-hidden="true">✳</span><div><p className="eyebrow">MAKE YOURSELF AT HOME</p><h2 id="setup-title">A quick pocket check.</h2></div></div><p className="setup-copy">Keep your space on this device, and let Pocket send you a nudge.</p>
       {ios && !installed && <p className="install-tip">On iPhone: open in Safari, tap <strong>Share → Add to Home Screen</strong>, then launch Pocket from your Home Screen.</p>}
       <div className="setting-row"><div><h3>Device storage</h3><p>{storageLabels[storage]}</p><small>Browser decides persistence. Clearing app data still removes saved settings.</small></div><button className="small-button" onClick={() => void requestStorage()} disabled={storage === 'checking' || storage === 'persistent'}>{storage === 'persistent' ? 'Enabled ✓' : 'Request'}</button></div>
       <div className="setting-row"><div><h3>Notifications</h3><p>{permission === 'granted' ? 'Permission granted' : permission === 'denied' ? 'Blocked in device settings' : permission === 'unsupported' ? 'Unavailable in this browser' : 'Only with your permission'}</p><small>Background delivery needs a connected push sender.</small></div><button className="small-button" disabled={busy || permission === 'denied' || (permission === 'unsupported' && !ios)} onClick={() => void (permission === 'granted' ? testNotification() : enableNotifications())}>{busy ? 'Working…' : permission === 'granted' ? 'Send test' : 'Enable'}</button></div>
       <button className="done-button" onClick={closeSetup}>Make yourself at home <span aria-hidden="true">→</span></button>
-    </section>}
+    </section></section>}
     {message && <p className="message" role="status">{message}</p>}
     <footer><span><i className={online ? '' : 'offline'} />{online ? 'A little calmer. A little more together.' : 'Offline. Still in your pocket.'}</span><span>YOURS, ON THIS DEVICE</span></footer>
   </main>;
