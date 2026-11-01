@@ -30,3 +30,26 @@ it('keeps custom store layouts isolated and persists edits, order, and removals'
   await store.persist.rehydrate();
   expect(store.getState().stores.map(item => item.id)).toEqual(['other']);
 });
+
+it('persists replacement lists per store and retains them when renaming stores or categories', async () => {
+  const store = useShopping;
+  store.setState({ stores: [
+    { id: 'first', name: 'First', categories: [{ id: 'produce', name: 'Produce' }] },
+    { id: 'second', name: 'Second', categories: [] },
+  ] });
+  store.getState().replaceItems('first', [{ item: 'Apples', categoryId: 'produce' }]);
+  store.getState().saveCategory('first', { id: 'produce', name: 'Fruit' });
+  store.getState().saveStore({ ...store.getState().stores[0], name: 'Renamed' });
+  const saved = await indexedDBStorage.getItem('pocket-shopping');
+  store.setState({ stores: [] });
+  await indexedDBStorage.setItem('pocket-shopping', saved!);
+  await store.persist.rehydrate();
+  expect(store.getState().stores[0]).toMatchObject({
+    name: 'Renamed',
+    categories: [{ id: 'produce', name: 'Fruit' }],
+    items: [{ item: 'Apples', categoryId: 'produce' }],
+  });
+  expect(store.getState().stores[1].items).toBeUndefined();
+  store.getState().replaceItems('first', [{ item: 'Pears', categoryId: 'produce' }]);
+  expect(store.getState().stores[0].items).toEqual([{ item: 'Pears', categoryId: 'produce' }]);
+});

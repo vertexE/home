@@ -58,3 +58,10 @@
 .drawer-task-card input::placeholder{color:#a4ab9d}
 .shopping-delete-store{border:1px solid #d9b5a8;background:#faf0eb;color:#9a4639;border-radius:12px;min-height:48px}
 .screen-nav h1{max-width:60vw;overflow-wrap:anywhere}
+.shopping-clipboard-actions{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.shopping-help{font-size:12px;line-height:1.7;color:#788077;margin:12px 0 20px}
+.shopping-current{margin-bottom:40px}
+.shopping-item-group{margin:20px 0}.shopping-item-group h3{font-size:13px;color:#79553c;margin:0 0 10px}
+.shopping-item-group ul{list-style:none;padding:0;margin:0}
+.shopping-item-group li{padding:16px;background:#fbfaf6;border:1px solid #e8dbcb;border-radius:12px;margin-bottom:8px;overflow-wrap:anywhere;white-space:pre-wrap}
+.shopping-store-actions{flex-shrink:0}
