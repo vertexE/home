@@ -39,7 +39,7 @@ export function TodoList() {
   const [ready, setReady] = useState(useTodos.persist.hasHydrated());
   const [error, setError] = useState(false);
   const [editing, setEditing] = useState<Todo | null>(null);
-  const addButton = useRef<HTMLButtonElement>(null);
+  const isExisting = editing !== null && items.some(item => item.id === editing.id);
 
   useEffect(() => {
     let active = true;
@@ -52,15 +52,26 @@ export function TodoList() {
   }, []);
 
   return <section className="todo-page" aria-labelledby="screen-title">
-    <div className="todo-heading"><div><p className="eyebrow">ONE THING AT A TIME</p><p className="intro-copy">A little space for what needs doing.</p></div><button ref={addButton} className="todo-add" aria-label="Add todo" disabled={!ready} onClick={() => setEditing({ id: crypto.randomUUID(), dueDate: today(), task: '', completed: false })}>+</button></div>
+    <div className="todo-heading"><div><p className="eyebrow">ONE THING AT A TIME</p><p className="intro-copy">A little space for what needs doing.</p></div><button className="todo-add" aria-label="Add todo" disabled={!ready} onClick={() => setEditing({ id: crypto.randomUUID(), dueDate: today(), task: '', completed: false })}>+</button></div>
     {error ? <p role="alert" className="message">Could not load todos. Reload to retry.</p> : !ready ? <p className="todo-empty" role="status">Loading your list…</p> : items.length === 0 ? <div className="todo-empty"><p>Nothing on your list yet.</p><p>Tap + to add your first todo.</p></div> : groupTodos(items).map(([date, group]) => <section className="todo-group" key={date} aria-label={date}><h2><time dateTime={date}>{new Date(`${date}T12:00:00`).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</time><span>{group.length}</span></h2>{group.map(item => <TodoRow key={item.id} item={item} edit={setEditing} />)}</section>)}
     {editing && <TodoDrawer onDismiss={() => setEditing(null)}>{close =>
       <form onSubmit={event => { event.preventDefault(); if (!editing.task.trim()) return; save({ ...editing, task: editing.task.trim() }); close(); }}>
-        <div className="drawer-heading"><h2 id="todo-form-title">{items.some(item => item.id === editing.id) ? 'Edit todo' : 'Add todo'}</h2><button type="button" className="drawer-close" onClick={close} aria-label="Close drawer">×</button></div>
-        <label htmlFor="todo-task">Task</label><textarea id="todo-task" data-drawer-autofocus required rows={3} placeholder="What needs doing?" value={editing.task} onChange={event => setEditing({ ...editing, task: event.target.value })} />
-        <label htmlFor="todo-date">Due date</label><input id="todo-date" type="date" required value={editing.dueDate} onChange={event => setEditing({ ...editing, dueDate: event.target.value })} />
-        <label className="todo-completed"><input type="checkbox" checked={editing.completed} onChange={event => setEditing({ ...editing, completed: event.target.checked })} /> Completed</label>
-        <button className="done-button" disabled={!editing.task.trim()} type="submit">Save todo <span aria-hidden="true">→</span></button>
+        <div className="drawer-heading">
+          <button type="button" className="drawer-cancel" onClick={close}>Cancel</button>
+          <h2 id="todo-form-title">{isExisting ? 'Edit todo' : 'New todo'}</h2>
+          <button className="drawer-save" disabled={!editing.task.trim()} type="submit">{isExisting ? 'Save' : 'Add'}</button>
+        </div>
+        <div className="drawer-fields">
+          <div className="drawer-task-card">
+            <label htmlFor="todo-task">What needs doing?</label>
+            <textarea id="todo-task" data-drawer-autofocus required rows={3} placeholder="e.g. Pick up groceries" value={editing.task} onChange={event => setEditing({ ...editing, task: event.target.value })} />
+          </div>
+          <div className="drawer-date-row">
+            <span className="drawer-date-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 3v4m10-4v4M3 11h18"/></svg></span>
+            <label htmlFor="todo-date">Due date</label>
+            <input id="todo-date" type="date" required value={editing.dueDate} onChange={event => setEditing({ ...editing, dueDate: event.target.value })} />
+          </div>
+        </div>
       </form>
     }</TodoDrawer>}
   </section>;

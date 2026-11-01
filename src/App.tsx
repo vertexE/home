@@ -20,7 +20,6 @@ export function App() {
   const [permission, setPermission] = useState<NotificationPermission | 'unsupported'>(typeof Notification === 'undefined' ? 'unsupported' : Notification.permission);
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
-  const [online, setOnline] = useState(navigator.onLine);
   const [page, setPage] = useState(window.location.hash);
   const settingsOpen = page === '#settings';
   const todoOpen = page === '#todos';
@@ -44,11 +43,8 @@ export function App() {
     void requestStorage();
     const storageError = () => setMessage('Device storage is unavailable. Changes may not survive closing this app.');
     const offlineError = () => setMessage('Offline setup failed. Reopen online to retry.');
-    const network = () => setOnline(navigator.onLine);
     window.addEventListener('pocket-storage-error', storageError);
     window.addEventListener('pocket-offline-error', offlineError);
-    window.addEventListener('online', network);
-    window.addEventListener('offline', network);
     // A failed asynchronous hydration does not fire onFinishHydration.
     if (useSettings.persist.hasHydrated() === false) {
       void useSettings.persist.rehydrate();
@@ -56,8 +52,6 @@ export function App() {
     return () => {
       window.removeEventListener('pocket-storage-error', storageError);
       window.removeEventListener('pocket-offline-error', offlineError);
-      window.removeEventListener('online', network);
-      window.removeEventListener('offline', network);
     };
   }, []);
 
@@ -112,6 +106,5 @@ export function App() {
       <button className="done-button" onClick={closeSetup}>Make yourself at home <span aria-hidden="true">→</span></button>
     </section></section>}
     {message && <p className="message" role="status">{message}</p>}
-    <footer><span><i className={online ? '' : 'offline'} />{online ? 'A little calmer. A little more together.' : 'Offline. Still in your pocket.'}</span><span>YOURS, ON THIS DEVICE</span></footer>
   </main>;
 }
