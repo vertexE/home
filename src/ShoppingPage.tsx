@@ -6,8 +6,9 @@ import { parseShoppingList, shoppingInstructions } from './shoppingImport';
 type Editing = { id: string; name: string; kind: 'store' | 'category'; existing: boolean };
 
 export function Shopping({ storeId }: { storeId?: string }) {
-  const { stores, saveStore, removeStore, saveCategory, removeCategory, moveCategory, replaceItems } = useShopping();
+  const { stores, saveStore, removeStore, saveCategory, removeCategory, moveCategory, replaceItems, toggleItem } = useShopping();
   const store = stores.find(item => item.id === storeId);
+  const shoppingItems = (store?.items ?? []).map((item, index) => ({ ...item, index }));
   const [ready, setReady] = useState(useShopping.persist.hasHydrated());
   const [error, setError] = useState(false);
   const [editing, setEditing] = useState<Editing | null>(null);
@@ -68,9 +69,9 @@ export function Shopping({ storeId }: { storeId?: string }) {
         {clipboardMessage && <p className="message" role={clipboardError ? 'alert' : 'status'}>{clipboardMessage}</p>}
         <div className="section-heading"><h2 id="shopping-list-title">Current shopping list</h2><span>{(store.items ?? []).length} ITEMS</span></div>
         {!store.items?.length ? <div className="todo-empty">No shopping items yet. Copy instructions to prepare your list, then upload it.</div> : <>
-          {[...store.categories.map(category => ({ ...category, items: store.items!.filter(item => item.categoryId === category.id) })),
-            { id: 'unassigned', name: 'Removed categories', items: store.items.filter(item => !store.categories.some(category => category.id === item.categoryId)) }]
-            .filter(group => group.items.length).map(group => <section className="shopping-item-group" key={group.id}><h3>{group.name}</h3><ul>{group.items.map((item, index) => <li key={index}>{item.item}</li>)}</ul></section>)}
+          {[...store.categories.map(category => ({ ...category, items: shoppingItems.filter(item => item.categoryId === category.id) })),
+            { id: 'unassigned', name: 'Removed categories', items: shoppingItems.filter(item => !store.categories.some(category => category.id === item.categoryId)) }]
+            .filter(group => group.items.length).map(group => <section className="shopping-item-group" key={group.id}><h3>{group.name}</h3><ul>{group.items.map(item => <li key={item.index}><label className={item.checked ? "shopping-checklist-item is-checked" : "shopping-checklist-item"}><input type="checkbox" checked={Boolean(item.checked)} onChange={() => toggleItem(store.id, item.index)} /><span>{item.item}</span></label></li>)}</ul></section>)}
         </>}
       </section>
       <section aria-labelledby="store-layout-title">

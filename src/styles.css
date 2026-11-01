@@ -63,5 +63,12 @@
 .shopping-current{margin-bottom:40px}
 .shopping-item-group{margin:20px 0}.shopping-item-group h3{font-size:13px;color:#79553c;margin:0 0 10px}
 .shopping-item-group ul{list-style:none;padding:0;margin:0}
-.shopping-item-group li{padding:16px;background:#fbfaf6;border:1px solid #e8dbcb;border-radius:12px;margin-bottom:8px;overflow-wrap:anywhere;white-space:pre-wrap}
+.shopping-item-group li{border-bottom:1px solid #e8dbcb}
+.shopping-checklist-item{display:flex;align-items:center;gap:14px;min-height:54px;padding:12px 0;cursor:pointer}
+.shopping-checklist-item input{appearance:none;-webkit-appearance:none;display:grid;place-content:center;width:24px;height:24px;flex-shrink:0;margin:0;border:1.5px solid #a58d76;border-radius:50%;background:transparent;cursor:pointer}
+.shopping-checklist-item input:checked{background:#79553c;border-color:#79553c}
+.shopping-checklist-item input:checked::after{content:'';width:9px;height:5px;border-left:2px solid white;border-bottom:2px solid white;transform:translateY(-1px) rotate(-45deg)}
+.shopping-checklist-item input:focus-visible{outline:3px solid #527c5d;outline-offset:4px}
+.shopping-checklist-item span{font-size:16px;line-height:1.5;overflow-wrap:anywhere;white-space:pre-wrap;min-width:0}
+.shopping-checklist-item.is-checked span{text-decoration:line-through;color:#858278}
 .shopping-store-actions{flex-shrink:0}

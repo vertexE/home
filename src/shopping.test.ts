@@ -53,3 +53,34 @@ it('persists replacement lists per store and retains them when renaming stores o
   store.getState().replaceItems('first', [{ item: 'Pears', categoryId: 'produce' }]);
   expect(store.getState().stores[0].items).toEqual([{ item: 'Pears', categoryId: 'produce' }]);
 });
+
+it('persists checks independently for duplicate items, preserves order, and resets checks on upload', async () => {
+  const store = useShopping;
+  store.setState({ stores: [
+    { id: 'first', name: 'First', categories: [], items: [
+      { item: 'Apples', categoryId: 'produce' },
+      { item: 'Coffee', categoryId: 'coffee' },
+      { item: 'Apples', categoryId: 'produce' },
+    ] },
+    { id: 'second', name: 'Second', categories: [], items: [{ item: 'Apples', categoryId: 'produce' }] },
+  ] });
+  store.getState().toggleItem('first', 2);
+  const saved = await indexedDBStorage.getItem('pocket-shopping');
+  store.setState({ stores: [] });
+  await indexedDBStorage.setItem('pocket-shopping', saved!);
+  await store.persist.rehydrate();
+  expect(store.getState().stores[0].items).toEqual([
+    { item: 'Apples', categoryId: 'produce' },
+    { item: 'Coffee', categoryId: 'coffee' },
+    { item: 'Apples', categoryId: 'produce', checked: true },
+  ]);
+  expect(store.getState().stores[1].items?.[0].checked).toBeUndefined();
+  store.getState().toggleItem('first', 2);
+  expect(store.getState().stores[0].items?.[2].checked).toBe(false);
+  store.getState().toggleItem('first', 2);
+  store.getState().replaceItems('first', store.getState().stores[0].items!);
+  expect(store.getState().stores[0].items?.every(item => !item.checked)).toBe(true);
+  await indexedDBStorage.getItem('pocket-shopping');
+  await store.persist.rehydrate();
+  expect(store.getState().stores[0].items?.every(item => !item.checked)).toBe(true);
+});
