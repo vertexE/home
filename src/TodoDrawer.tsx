@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 
 export function TodoDrawer({ onDismiss, children }: { onDismiss: () => void; children: (close: () => void) => ReactNode }) {
   const dialog = useRef<HTMLDialogElement>(null);
-  const [visible, setVisible] = useState(false);
+  const [visible, setVisible] = useState(true);
   const [closing, setClosing] = useState(false);
   const [offset, setOffset] = useState(0);
   const [dragging, setDragging] = useState(false);
@@ -11,16 +11,13 @@ export function TodoDrawer({ onDismiss, children }: { onDismiss: () => void; chi
   const dismiss = useRef(onDismiss);
   dismiss.current = onDismiss;
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const sheet = dialog.current!;
     const focused = document.activeElement;
     const scrollY = window.scrollY;
     const body = document.body.style;
     const previous = { position: body.position, top: body.top, width: body.width, overflow: body.overflow };
     Object.assign(body, { position: 'fixed', top: `-${scrollY}px`, width: '100%', overflow: 'hidden' });
-    sheet.showModal();
-    sheet.querySelector<HTMLElement>('[data-drawer-autofocus]')?.focus({ preventScroll: true });
-
     const viewport = window.visualViewport;
     function resize() {
       const height = viewport?.height ?? window.innerHeight;
@@ -33,15 +30,33 @@ export function TodoDrawer({ onDismiss, children }: { onDismiss: () => void; chi
     viewport?.addEventListener('resize', resize);
     viewport?.addEventListener('scroll', resize);
     window.addEventListener('resize', resize);
-    // Establish closed position before next frame starts entrance transition.
-    sheet.getBoundingClientRect();
-    const frame = requestAnimationFrame(() => setVisible(true));
+    // Focus only after final drawer geometry and viewport listeners are in place.
+    // Focusing a translated, offscreen input makes iOS pan to its old position.
+    sheet.showModal();
+    sheet.querySelector<HTMLElement>('[data-drawer-autofocus]')?.focus({ preventScroll: true });
+    let frame = 0;
+    let settleUntil = 0;
+    function settleViewport() {
+      resize();
+      if (performance.now() < settleUntil) frame = requestAnimationFrame(settleViewport);
+      else frame = 0;
+    }
+    function trackKeyboard() {
+      settleUntil = performance.now() + 700;
+      if (!frame) frame = requestAnimationFrame(settleViewport);
+    }
+    // WebKit can delay viewport events until keyboard animation finishes.
+    sheet.addEventListener('focusin', trackKeyboard);
+    sheet.addEventListener('focusout', trackKeyboard);
+    trackKeyboard();
     return () => {
       cancelAnimationFrame(frame);
       clearTimeout(timer.current);
       viewport?.removeEventListener('resize', resize);
       viewport?.removeEventListener('scroll', resize);
       window.removeEventListener('resize', resize);
+      sheet.removeEventListener('focusin', trackKeyboard);
+      sheet.removeEventListener('focusout', trackKeyboard);
       sheet.close();
       Object.assign(body, previous);
       window.scrollTo(0, scrollY);
