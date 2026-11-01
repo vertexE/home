@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { groupTodos, useTodos, type Todo } from './todos';
+import { TodoDrawer } from './TodoDrawer';
 
 function today() {
   const date = new Date();
@@ -39,7 +40,6 @@ export function TodoList() {
   const [ready, setReady] = useState(useTodos.persist.hasHydrated());
   const [error, setError] = useState(false);
   const [editing, setEditing] = useState<Todo | null>(null);
-  const dialog = useRef<HTMLDialogElement>(null);
   const addButton = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -52,28 +52,18 @@ export function TodoList() {
     return () => { active = false; };
   }, []);
 
-  useEffect(() => {
-    if (!editing) return;
-    dialog.current?.showModal();
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = previous; };
-  }, [editing]);
-
-  function close() { dialog.current?.close(); setEditing(null); addButton.current?.focus(); }
-
   return <section className="todo-page" aria-labelledby="todo-title">
     <a className="back-link" href="#">← Your everyday</a>
     <div className="todo-heading"><div><p className="eyebrow">ONE THING AT A TIME</p><h1 id="todo-title">TODO lists<span>.</span></h1><p className="intro-copy">A little space for what needs doing.</p></div><button ref={addButton} className="todo-add" aria-label="Add todo" disabled={!ready} onClick={() => setEditing({ id: crypto.randomUUID(), dueDate: today(), task: '', completed: false })}>+</button></div>
     {error ? <p role="alert" className="message">Could not load todos. Reload to retry.</p> : !ready ? <p className="todo-empty" role="status">Loading your list…</p> : items.length === 0 ? <div className="todo-empty"><p>Nothing on your list yet.</p><p>Tap + to add your first todo.</p></div> : groupTodos(items).map(([date, group]) => <section className="todo-group" key={date} aria-label={date}><h2><time dateTime={date}>{new Date(`${date}T12:00:00`).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</time><span>{group.length}</span></h2>{group.map(item => <TodoRow key={item.id} item={item} edit={setEditing} />)}</section>)}
-    {editing && <dialog ref={dialog} className="todo-drawer" aria-labelledby="todo-form-title" onCancel={event => { event.preventDefault(); close(); }} onClick={event => { if (event.target === event.currentTarget) close(); }}>
+    {editing && <TodoDrawer onDismiss={() => setEditing(null)}>{close =>
       <form onSubmit={event => { event.preventDefault(); if (!editing.task.trim()) return; save({ ...editing, task: editing.task.trim() }); close(); }}>
-        <div className="drawer-handle" aria-hidden="true" /><div className="drawer-heading"><h2 id="todo-form-title">{items.some(item => item.id === editing.id) ? 'Edit todo' : 'Add todo'}</h2><button type="button" className="drawer-close" onClick={close} aria-label="Close drawer">×</button></div>
-        <label htmlFor="todo-task">Task</label><textarea id="todo-task" autoFocus required rows={3} placeholder="What needs doing?" value={editing.task} onChange={event => setEditing({ ...editing, task: event.target.value })} />
+        <div className="drawer-heading"><h2 id="todo-form-title">{items.some(item => item.id === editing.id) ? 'Edit todo' : 'Add todo'}</h2><button type="button" className="drawer-close" onClick={close} aria-label="Close drawer">×</button></div>
+        <label htmlFor="todo-task">Task</label><textarea id="todo-task" data-drawer-autofocus required rows={3} placeholder="What needs doing?" value={editing.task} onChange={event => setEditing({ ...editing, task: event.target.value })} />
         <label htmlFor="todo-date">Due date</label><input id="todo-date" type="date" required value={editing.dueDate} onChange={event => setEditing({ ...editing, dueDate: event.target.value })} />
         <label className="todo-completed"><input type="checkbox" checked={editing.completed} onChange={event => setEditing({ ...editing, completed: event.target.checked })} /> Completed</label>
         <button className="done-button" disabled={!editing.task.trim()} type="submit">Save todo <span aria-hidden="true">→</span></button>
       </form>
-    </dialog>}
+    }</TodoDrawer>}
   </section>;
 }
