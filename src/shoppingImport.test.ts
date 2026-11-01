@@ -11,6 +11,14 @@ describe('clipboard shopping lists', () => {
     expect(parseShoppingList('{"items":[]}', categories)).toEqual([]);
   });
 
+  it('accepts copied code blocks with or without the JSON label', () => {
+    const json = '{"items":[{"item":"Apples","where":"Produce"}]}';
+    for (const label of ['json', '']) {
+      expect(parseShoppingList('```' + label + '\n' + json + '\n```', categories)).toEqual([{ item: 'Apples', categoryId: 'produce' }]);
+    }
+    expect(() => parseShoppingList('Explanation\n```json\n' + json + '\n```', categories)).toThrow();
+  });
+
   it.each([
     '', 'null', '[]', '{}', '{"items":{}}', '{"items":[null]}',
     '{"items":[{"item":"","where":"Produce"}]}',
@@ -29,6 +37,7 @@ describe('clipboard shopping lists', () => {
     expect(instructions).toContain(JSON.stringify(categories.map(category => category.name)));
     expect(instructions).toContain('{"items":[{"item":"<item-name>","where":"<layout-name>"}]}');
     expect(instructions).toContain('must exactly match');
-    expect(instructions).toContain('Do not include Markdown fences');
+    expect(instructions).toContain('single fenced code block labeled json');
+    expect(instructions).toContain('two-space indentation');
   });
 });

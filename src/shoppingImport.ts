@@ -2,7 +2,9 @@ import type { Category, ShoppingItem, ShoppingStore } from './shopping';
 
 export function parseShoppingList(text: string, categories: Category[]): ShoppingItem[] {
   let value: unknown;
-  try { value = JSON.parse(text); }
+  const trimmed = text.trim();
+  const fenced = /^```(?:json)?\s*\n([\s\S]*?)\n```$/i.exec(trimmed);
+  try { value = JSON.parse(fenced ? fenced[1] : trimmed); }
   catch { throw new Error('Clipboard must contain valid JSON: {"items":[{"item":"Apples","where":"Produce"}]}'); }
   if (!value || typeof value !== 'object' || !('items' in value) || !Array.isArray(value.items)) {
     throw new Error('Expected a JSON object with an "items" array.');
@@ -20,7 +22,7 @@ export function parseShoppingList(text: string, categories: Category[]): Shoppin
 export function shoppingInstructions(store: ShoppingStore): string {
   return [
     `Convert my shopping list for ${JSON.stringify(store.name)} into the JSON format below.`,
-    'Return only valid JSON. Do not include Markdown fences, explanations, or additional fields.',
+    'Return valid JSON inside a single fenced code block labeled json so I can copy it. Use two-space indentation, double-quoted keys and strings, and no trailing commas. Do not include explanations outside the code block or additional fields.',
     'Required format: {"items":[{"item":"<item-name>","where":"<layout-name>"}]}',
     'Each item must have a non-empty item name. Assign every item to the most appropriate category.',
     'The "where" value must exactly match one of these store layout names (including capitalization):',
