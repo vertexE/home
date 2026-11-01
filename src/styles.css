@@ -41,3 +41,20 @@
 .nav-back svg{width:22px;height:22px;flex-shrink:0}
 @media(min-width:760px){.screen-nav{margin-left:-48px;margin-right:-48px;padding-left:30px;padding-right:30px}}
 @media(max-width:540px){.screen-nav{margin-top:calc(-22px - env(safe-area-inset-top))}}
+
+.tile.shopping{text-decoration:none;color:inherit}.tile.shopping:hover{border-color:#b39476}
+.shopping-page .todo-add{background:#79553c}
+.shopping-stores{display:grid;gap:10px}
+.shopping-store{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px;border:1px solid #e8dbcb;border-radius:14px;background:#fbf6ee;color:#79553c;text-decoration:none;overflow-wrap:anywhere}
+.shopping-store strong{display:block;font-size:17px;font-weight:500}.shopping-store small{display:block;color:#91755d;font-size:12px;margin-top:6px}
+.shopping-edit{border:0;background:none;color:#79553c;min-height:44px;padding:8px;font-size:13px}
+.shopping-layout{list-style:none;padding:0;margin:0}
+.shopping-row{display:flex;align-items:center;gap:8px;min-height:66px;padding:6px 10px;background:#fbfaf6;border:1px solid #e8dbcb;border-radius:12px;margin-bottom:8px}
+.shopping-row.is-dragging{background:#f0e5d6;border-color:#b39476}
+.category-handle{border:0;background:none;color:#91755d;font-size:28px;width:44px;min-height:48px;flex-shrink:0;touch-action:none;cursor:grab;user-select:none}
+.category-handle:active{cursor:grabbing}
+.shopping-remove{border:0;background:none;color:#986655;font-size:25px;min-width:44px;min-height:44px}
+.drawer-task-card input{display:block;width:100%;min-width:0;border:0;background:transparent;padding:0;font:inherit;font-size:22px;line-height:1.45;color:#283e36}
+.drawer-task-card input::placeholder{color:#a4ab9d}
+.shopping-delete-store{border:1px solid #d9b5a8;background:#faf0eb;color:#9a4639;border-radius:12px;min-height:48px}
+.screen-nav h1{max-width:60vw;overflow-wrap:anywhere}

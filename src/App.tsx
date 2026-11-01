@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useSettings } from './store';
 import { TodoList } from './TodoList';
+import { Shopping } from './ShoppingPage';
+import { useShopping } from './shopping';
 
 type StorageStatus = 'checking' | 'persistent' | 'best-effort' | 'unsupported' | 'error';
 const storageLabels: Record<StorageStatus, string> = {
@@ -23,6 +25,9 @@ export function App() {
   const [page, setPage] = useState(window.location.hash);
   const settingsOpen = page === '#settings';
   const todoOpen = page === '#todos';
+  const shoppingOpen = page === '#shopping' || page.startsWith('#shopping/');
+  const storeId = page.startsWith('#shopping/') ? page.slice('#shopping/'.length) : undefined;
+  const storeName = useShopping(state => state.stores.find(store => store.id === storeId)?.name);
   useEffect(() => {
     const navigate = () => { setPage(window.location.hash); window.scrollTo(0, 0); };
     window.addEventListener('hashchange', navigate);
@@ -88,14 +93,14 @@ export function App() {
   }
 
   return <main className="shell">
-    {settingsOpen || todoOpen ? <header className="screen-nav">
-      <a className="nav-back" href="#" aria-label="Back to Home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7" /></svg><span>Back</span></a>
-      <h1 id="screen-title">{settingsOpen ? 'Settings' : 'TODO lists'}</h1>
+    {settingsOpen || todoOpen || shoppingOpen ? <header className="screen-nav">
+      <a className="nav-back" href={storeId ? "#shopping" : "#"} aria-label={storeId ? "Back to stores" : "Back to Home"}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7" /></svg><span>Back</span></a>
+      <h1 id="screen-title">{settingsOpen ? 'Settings' : shoppingOpen ? storeName ?? 'Shopping' : 'TODO lists'}</h1>
     </header> : <header className="topbar"><a className="brand" href="./" aria-label="Pocket home"><span className="brand-icon"><Icon kind="pocket" /></span>Pocket<span className="brand-dot">.</span></a><a className="settings" href="#settings" aria-label="Settings" aria-current={settingsOpen ? 'page' : undefined}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m9.5 3-.5 2-2 .9-1.9-.6-2.5 4.3L4 11v2l-1.4 1.4 2.5 4.3 1.9-.6 2 .9.5 2h5l.5-2 2-.9 1.9.6 2.5-4.3L20 13v-2l1.4-1.4-2.5-4.3-1.9.6-2-.9-.5-2z"/><circle cx="12" cy="12" r="3.2"/></svg></a></header>}
-    {!settingsOpen && (todoOpen ? <TodoList /> : <><section className="intro"><p className="eyebrow">A LITTLE SPACE FOR EVERYDAY LIFE</p><h1>Less on your mind.<br /><span>More in your pocket.</span></h1><p className="intro-copy">Your lists, in one little place.<br className="mobile-break" /> Ready whenever you are.</p></section>
+    {!settingsOpen && (todoOpen ? <TodoList /> : shoppingOpen ? <Shopping key={storeId ?? 'stores'} storeId={storeId} /> : <><section className="intro"><p className="eyebrow">A LITTLE SPACE FOR EVERYDAY LIFE</p><h1>Less on your mind.<br /><span>More in your pocket.</span></h1><p className="intro-copy">Your lists, in one little place.<br className="mobile-break" /> Ready whenever you are.</p></section>
     <section className="lists" aria-labelledby="lists-title"><div className="section-heading"><h2 id="lists-title">Your everyday</h2><span>02 SPACES</span></div><div className="tiles">
       <a className="tile todo" href="#todos"><div className="tile-top"><span className="tile-icon"><Icon kind="todo" /></span><span className="pill">OPEN ↗</span></div><div><h3>TODO lists</h3><p>Make room for what matters.</p></div><span className="tile-number" aria-hidden="true">01</span></a>
-      <article className="tile shopping"><div className="tile-top"><span className="tile-icon"><Icon kind="bag" /></span><span className="pill">COMING SOON</span></div><div><h3>Shopping</h3><p>A little list. One less thing to forget.</p></div><span className="tile-number" aria-hidden="true">02</span></article>
+      <a className="tile shopping" href="#shopping"><div className="tile-top"><span className="tile-icon"><Icon kind="bag" /></span><span className="pill">OPEN ↗</span></div><div><h3>Shopping</h3><p>A little list. One less thing to forget.</p></div><span className="tile-number" aria-hidden="true">02</span></a>
     </div></section></>)}
     {settingsOpen && <section className="settings-page" aria-labelledby="screen-title">
       <div className="settings-heading"><p className="eyebrow">MAKE YOURSELF AT HOME</p><p className="intro-copy">A few little things to make Pocket yours.</p></div>
